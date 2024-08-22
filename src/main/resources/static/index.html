@@ -3,96 +3,62 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <h1>Paul Chanda</h1>
   <title>Temperature & Humidity Monitor</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin: 20px;
-    }
-    #sensorDataChart {
-      max-width: 800px;
-      margin: 20px auto;
-    }
-    button {
-      margin: 10px;
-      padding: 10px 20px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-  </style>
+
 </head>
 <body>
-  <h1>Paul Chanda</h1>
-  <h2>Temperature & Humidity Monitor</h2>
+<h1>Temperature & Humidity Monitor graph</h1>
+<canvas id="sensorDataChart" width="50" height="50"></canvas>
 
-  <button onclick="showTemperature()">Show Temperature</button>
-  <button onclick="showHumidity()">Show Humidity</button>
 
-  <canvas id="sensorDataChart" width="800" height="400"></canvas>
+<script>
+  async function fetchData() {
+    const response = await fetch('/sensor-data');
+    const data = await response.json();
 
-  <script>
-    let chart;
+    const timestamps = data.map(entry => entry.timestamp);
+    const temperatures = data.map(entry => entry.temperature);
+    const humidities = data.map(entry => entry.humidity);
 
-    async function fetchData() {
-      const response = await fetch('/sensor-data');
-      const data = await response.json();
-
-      const timestamps = data.map(entry => entry.timestamp);
-      const temperatures = data.map(entry => entry.temperature);
-      const humidities = data.map(entry => entry.humidity);
-
-      const ctx = document.getElementById('sensorDataChart').getContext('2d');
-      chart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: timestamps,
-          datasets: [
-            {
-              label: 'Temperature (°C)',
-              data: temperatures,
-              borderColor: 'rgba(255, 99, 132, 1)',
-              borderWidth: 2,
-              fill: false
-            },
-            {
-              label: 'Humidity (%)',
-              data: humidities,
-              borderColor: 'rgba(54, 162, 235, 1)',
-              borderWidth: 2,
-              fill: false
-            }
-          ]
-        },
-        options: {
-          scales: {
-            x: {
-              type: 'time',
-              time: {
-                unit: 'minute'
-              }
+    const ctx = document.getElementById('sensorDataChart').getContext('2d');
+    const chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: timestamps,
+        datasets: [
+          {
+            label: 'Temperature (°C)',
+            data: temperatures,
+            borderColor: 'rgba(255, 99, 132, 1)',
+            borderWidth: 2,
+            fill: false
+             },
+          {
+            label: 'Humidity (%)',
+            data: humidities,
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 2,
+            fill: false
+          }
+        ]
+      },
+      options: {
+        scales: {
+          x: {
+            type: 'time',
+            time: {
+              unit: 'minute'
             }
           }
         }
-      });
-    }
+      }
+    });
+  }
 
-    function showTemperature() {
-      chart.getDatasetMeta(0).hidden = false; // Show temperature
-      chart.getDatasetMeta(1).hidden = true;  // Hide humidity
-      chart.update();
-    }
-
-    function showHumidity() {
-      chart.getDatasetMeta(0).hidden = true;  // Hide temperature
-      chart.getDatasetMeta(1).hidden = false; // Show humidity
-      chart.update();
-    }
-
-    fetchData();
-  </script>
+  fetchData();
+</script>
 </body>
 </html>
-
