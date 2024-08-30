@@ -1,64 +1,176 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <h1>Paul Chanda</h1>
-  <title>Temperature & Humidity Monitor</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <h1>Paul Chanda</h1>
+    <title>Temperature & Humidity Monitor</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
 
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: lightslategrey; /* Light brown background */
+        }
+        h1 {
+            text-align: center;
+        }
+        .chart-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .sensor-value {
+            font-size: 1.5em;
+            text-align: center;
+            margin-top: 10px;
+        }
+    </style>
 </head>
 <body>
-<h1>Temperature & Humidity Monitor graph</h1>
-<canvas id="sensorDataChart" width="50" height="50"></canvas>
+<h1>Temperature & Humidity Monitor Graph</h1>
 
+<div class="chart-container">
+    <!-- Temperature Graph -->
+    <canvas id="temperatureChart" width="500" height="300"></canvas>
+    <div class="sensor-value" id="temperatureValue"></div>
+</div>
+
+<div class="chart-container">
+    <!-- Humidity Graph -->
+    <canvas id="humidityChart" width="500" height="300"></canvas>
+    <div class="sensor-value" id="humidityValue"></div>
+</div>
 
 <script>
-  async function fetchData() {
-    const response = await fetch('/sensor-data');
-    const data = await response.json();
+    async function fetchData() {
+        const response = await fetch('/sensor-data');
+        const data = await response.json();
 
-    const timestamps = data.map(entry => entry.timestamp);
-    const temperatures = data.map(entry => entry.temperature);
-    const humidities = data.map(entry => entry.humidity);
+        const timestamps = data.map(entry => entry.timestamp);
+        const temperatures = data.map(entry => entry.temperature);
+        const humidities = data.map(entry => entry.humidity);
 
-    const ctx = document.getElementById('sensorDataChart').getContext('2d');
-    const chart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: timestamps,
-        datasets: [
-          {
-            label: 'Temperature (°C)',
-            data: temperatures,
-            borderColor: 'rgba(255, 99, 132, 1)',
-            borderWidth: 2,
-            fill: false
-             },
-          {
-            label: 'Humidity (%)',
-            data: humidities,
-            borderColor: 'rgba(54, 162, 235, 1)',
-            borderWidth: 2,
-            fill: false
-          }
-        ]
-      },
-      options: {
-        scales: {
-          x: {
-            type: 'time',
-            time: {
-              unit: 'minute'
-            }
-          }
+        if (temperatures.length > 0 && humidities.length > 0) {
+            document.getElementById('temperatureValue').textContent = `Temperature: ${temperatures[temperatures.length - 1]} °C`;
+            document.getElementById('humidityValue').textContent = `Humidity: ${humidities[humidities.length - 1]} %`;
+        } else {
+            document.getElementById('temperatureValue').textContent = "Temperature: No data";
+            document.getElementById('humidityValue').textContent = "Humidity: No data";
         }
-      }
-    });
-  }
 
-  fetchData();
+        const tempCtx = document.getElementById('temperatureChart').getContext('2d');
+        new Chart(tempCtx, {
+            type: 'line',
+            data: {
+                labels: timestamps,
+                datasets: [
+                    {
+                        label: 'Temperature (°C)',
+                        data: temperatures,
+                        borderColor: 'rgba(255, 99, 132, 1)', /* Solid black line */
+                        borderWidth: 2,
+                        fill: true  /* No fill, solid line */
+                    }
+                ]
+            },
+            options: {
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: 'rgba(0, 0, 0, 1)', /* Solid black color for labels */
+                            font: {
+                                weight: 'bold'  /* Increase font weight for labels */
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        type: 'time',
+                        time: {
+                            unit: 'minute'
+                        },
+                        ticks: {
+                            color: 'rgba(0, 0, 0, 1)', /* Darker numbers on x-axis */
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.2)' /* Darker grid lines on x-axis */
+                        }
+                    },
+                    y: {
+                        ticks: {
+                            color: 'rgba(0, 0, 0, 1)', /* Darker numbers on y-axis */
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.2)' /* Darker grid lines on y-axis */
+                        }
+                    }
+                }
+            }
+        });
+
+        const humCtx = document.getElementById('humidityChart').getContext('2d');
+        new Chart(humCtx, {
+            type: 'line',
+            data: {
+                labels: timestamps,
+                datasets: [
+                    {
+                        label: 'Humidity (%)',
+                        data: humidities,
+                        borderColor: 'rgba(54, 162, 235, 1)', /* Solid black line */
+                        borderWidth: 2,
+                        fill: true  /* No fill, solid line */
+                    }
+                ]
+            },
+            options: {
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: 'rgba(0, 0, 0, 1)', /* Solid black color for labels */
+                            font: {
+                                weight: 'bold'  /* Increase font weight for labels */
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        type: 'time',
+                        time: {
+                            unit: 'minute'
+                        },
+                        ticks: {
+                            color: 'rgba(0, 0, 0, 1)', /* Darker numbers on x-axis */
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.2)' /* Darker grid lines on x-axis */
+                        }
+                    },
+                    y: {
+                        ticks: {
+                            color: 'rgba(0, 0, 0, 1)', /* Darker numbers on y-axis */
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.2)' /* Darker grid lines on y-axis */
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    fetchData();
 </script>
 </body>
 </html>
