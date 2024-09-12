@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <h1>Paul Chanda</h1>
+    <h3>Paul Chanda</h3>
     <title>Temperature & Humidity Monitor</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
-
     <style>
         body {
             display: flex;
@@ -17,7 +16,7 @@
             height: 100vh;
             margin: 0;
             font-family: Arial, sans-serif;
-            background-color: lightslategrey; /* Light brown background */
+            background-color: lightslategrey;
         }
         h1 {
             text-align: center;
@@ -29,9 +28,27 @@
             margin-bottom: 30px;
         }
         .sensor-value {
-            font-size: 1.5em;
+            font-size: 1.0em;
             text-align: center;
             margin-top: 10px;
+        }
+        .button-container {
+            margin-top: 20px;
+        }
+        .button-container button {
+            padding: 10px 20px;
+            margin: 5px;
+            font-size: 1em;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            color: white;
+        }
+        .button-container button.on {
+            background-color: blue;
+        }
+        .button-container button.off {
+            background-color: red;
         }
     </style>
 </head>
@@ -40,137 +57,172 @@
 
 <div class="chart-container">
     <!-- Temperature Graph -->
-    <canvas id="temperatureChart" width="500" height="300"></canvas>
-    <div class="sensor-value" id="temperatureValue"></div>
+    <canvas id="temperatureChart" width="300" height="150"></canvas>
+    <div class="sensor-value" id="temperatureValue">Temperature: No data</div>
 </div>
 
 <div class="chart-container">
     <!-- Humidity Graph -->
-    <canvas id="humidityChart" width="500" height="300"></canvas>
-    <div class="sensor-value" id="humidityValue"></div>
+    <canvas id="humidityChart" width="300" height="150"></canvas>
+    <div class="sensor-value" id="humidityValue">Humidity: No data</div>
+</div>
+
+<!-- Bulb Control Buttons -->
+<div class="button-container">
+    <button class="on" onclick="controlBulb('on')">Turn Bulb ON</button>
+    <button class="off" onclick="controlBulb('off')">Turn Bulb OFF</button>
 </div>
 
 <script>
     async function fetchData() {
-        const response = await fetch('/sensor-data');
-        const data = await response.json();
+        try {
+            const response = await fetch('/sensor-data');
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            const data = await response.json();
 
-        const timestamps = data.map(entry => entry.timestamp);
-        const temperatures = data.map(entry => entry.temperature);
-        const humidities = data.map(entry => entry.humidity);
+            const timestamps = data.map(entry => entry.timestamp);
+            const temperatures = data.map(entry => entry.temperature);
+            const humidities = data.map(entry => entry.humidity);
 
-        if (temperatures.length > 0 && humidities.length > 0) {
-            document.getElementById('temperatureValue').textContent = `Temperature: ${temperatures[temperatures.length - 1]} °C`;
-            document.getElementById('humidityValue').textContent = `Humidity: ${humidities[humidities.length - 1]} %`;
-        } else {
-            document.getElementById('temperatureValue').textContent = "Temperature: No data";
-            document.getElementById('humidityValue').textContent = "Humidity: No data";
-        }
+            if (temperatures.length > 0 && humidities.length > 0) {
+                document.getElementById('temperatureValue').textContent = `Temperature: ${temperatures[temperatures.length - 1]} °C`;
+                document.getElementById('humidityValue').textContent = `Humidity: ${humidities[humidities.length - 1]} %`;
+            } else {
+                document.getElementById('temperatureValue').textContent = "Temperature: No data";
+                document.getElementById('humidityValue').textContent = "Humidity: No data";
+            }
 
-        const tempCtx = document.getElementById('temperatureChart').getContext('2d');
-        new Chart(tempCtx, {
-            type: 'line',
-            data: {
-                labels: timestamps,
-                datasets: [
-                    {
+            const tempCtx = document.getElementById('temperatureChart').getContext('2d');
+            new Chart(tempCtx, {
+                type: 'line',
+                data: {
+                    labels: timestamps,
+                    datasets: [{
                         label: 'Temperature (°C)',
                         data: temperatures,
-                        borderColor: 'rgba(255, 99, 132, 1)', /* Solid black line */
+                        borderColor: 'rgba(255, 99, 132, 1)',
                         borderWidth: 2,
-                        fill: true  /* No fill, solid line */
-                    }
-                ]
-            },
-            options: {
-                plugins: {
-                    legend: {
-                        labels: {
-                            color: 'rgba(0, 0, 0, 1)', /* Solid black color for labels */
-                            font: {
-                                weight: 'bold'  /* Increase font weight for labels */
+                        fill: true
+                    }]
+                },
+                options: {
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: 'rgba(0, 0, 0, 1)',
+                                font: {
+                                    weight: 'bold'
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: 'minute'
+                            },
+                            ticks: {
+                                color: 'rgba(0, 0, 0, 1)'
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.2)'
+                            }
+                        },
+                        y: {
+                            ticks: {
+                                color: 'rgba(0, 0, 0, 1)'
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.2)'
                             }
                         }
                     }
-                },
-                scales: {
-                    x: {
-                        type: 'time',
-                        time: {
-                            unit: 'minute'
-                        },
-                        ticks: {
-                            color: 'rgba(0, 0, 0, 1)', /* Darker numbers on x-axis */
-                        },
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.2)' /* Darker grid lines on x-axis */
-                        }
-                    },
-                    y: {
-                        ticks: {
-                            color: 'rgba(0, 0, 0, 1)', /* Darker numbers on y-axis */
-                        },
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.2)' /* Darker grid lines on y-axis */
-                        }
-                    }
                 }
-            }
-        });
+            });
 
-        const humCtx = document.getElementById('humidityChart').getContext('2d');
-        new Chart(humCtx, {
-            type: 'line',
-            data: {
-                labels: timestamps,
-                datasets: [
-                    {
+            const humCtx = document.getElementById('humidityChart').getContext('2d');
+            new Chart(humCtx, {
+                type: 'line',
+                data: {
+                    labels: timestamps,
+                    datasets: [{
                         label: 'Humidity (%)',
                         data: humidities,
-                        borderColor: 'rgba(54, 162, 235, 1)', /* Solid black line */
+                        borderColor: 'rgba(54, 162, 235, 1)',
                         borderWidth: 2,
-                        fill: true  /* No fill, solid line */
-                    }
-                ]
-            },
-            options: {
-                plugins: {
-                    legend: {
-                        labels: {
-                            color: 'rgba(0, 0, 0, 1)', /* Solid black color for labels */
-                            font: {
-                                weight: 'bold'  /* Increase font weight for labels */
+                        fill: true
+                    }]
+                },
+                options: {
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: 'rgba(0, 0, 0, 1)',
+                                font: {
+                                    weight: 'bold'
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: 'minute'
+                            },
+                            ticks: {
+                                color: 'rgba(0, 0, 0, 1)'
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.2)'
+                            }
+                        },
+                        y: {
+                            ticks: {
+                                color: 'rgba(0, 0, 0, 1)'
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.2)'
                             }
                         }
                     }
-                },
-                scales: {
-                    x: {
-                        type: 'time',
-                        time: {
-                            unit: 'minute'
-                        },
-                        ticks: {
-                            color: 'rgba(0, 0, 0, 1)', /* Darker numbers on x-axis */
-                        },
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.2)' /* Darker grid lines on x-axis */
-                        }
-                    },
-                    y: {
-                        ticks: {
-                            color: 'rgba(0, 0, 0, 1)', /* Darker numbers on y-axis */
-                        },
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.2)' /* Darker grid lines on y-axis */
-                        }
-                    }
                 }
-            }
-        });
+            });
+
+        } catch (error) {
+            console.error('Error fetching data:', error);
+            document.getElementById('temperatureValue').textContent = "Temperature: Error fetching data";
+            document.getElementById('humidityValue').textContent = "Humidity: Error fetching data";
+        }
     }
 
     fetchData();
+
+    async function controlBulb(action) {
+        try {
+            const response = await fetch('/control-bulb', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ action })
+            });
+
+            if (response.ok) {
+                const result = await response.json();  // Parse JSON response
+                console.log('Bulb control response:', result);  // Debugging line
+                alert(result.message);  // Display success message
+            } else {
+                console.error('Error controlling bulb:', response.statusText);  // More detailed error
+                alert('Error controlling bulb: ' + response.statusText);
+            }
+        } catch (error) {
+            console.error('Fetch error:', error);  // Detailed error logging
+        }
+    }
 </script>
 </body>
 </html>
